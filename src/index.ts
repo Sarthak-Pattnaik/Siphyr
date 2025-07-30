@@ -1,4 +1,4 @@
-import express, { Response } from "express";
+import express, { Request, Response } from "express";
 import http from "http";
 import cors from "cors";
 import { Server } from "socket.io";
@@ -15,13 +15,34 @@ app.use(cors());
 app.use(express.json());
 
 // REST API Example
-app.get("/messages", async (res: Response) => {
+app.get("/messages", async (_req:Request, res: Response) => {
   const messages = await prisma.message.findMany({
     include: { sender: true },
     orderBy: { createdAt: "desc" }
   });
   res.json(messages);
 });
+
+app.post("/messages", async (req: Request, res: Response) => {
+  const { content, senderId } = req.body;
+
+  if (!content || !senderId) {
+    return res.status(400).json({ error: "content and senderId are required" });
+  }
+
+  try {
+    const message = await prisma.message.create({
+      data: {
+        content,
+        senderId
+      }
+    });
+    res.status(201).json(message);
+  } catch (err) {
+    res.status(500).json({ error: "Something went wrong" });
+  }
+});
+
 
 // Socket.IO Realtime
 io.on("connection", (socket) => {
