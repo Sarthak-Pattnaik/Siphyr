@@ -63,3 +63,20 @@ io.on("connection", (socket) => {
 server.listen(3000, () => {
   console.log("Server running on http://localhost:3000");
 });
+
+app.post("/users", async (req: Request, res: Response) => {
+  const { username } = req.body;
+  if (!username) return res.status(400).json({ error: "Username required" });
+
+  try {
+    const user = await prisma.user.create({ data: { username } });
+    res.status(201).json(user);
+  } catch (err) {
+    res.status(500).json({ error: "Username may already exist" });
+  }
+});
+
+app.get("/users", async (req: Request, res: Response) => {
+  const users = await prisma.user.findMany();
+  res.json(users);
+});
