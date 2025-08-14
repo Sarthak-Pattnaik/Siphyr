@@ -15,13 +15,22 @@ app.use(cors());
 app.use(express.json());
 
 // REST API Example
-app.get("/messages", async (_req:Request, res: Response) => {
+app.get("/messages", async (req: Request, res: Response) => {
+  const { senderId } = req.query;
+
+  if (!senderId) {
+    return res.status(400).json({ error: "senderId query parameter is required" });
+  }
+
   const messages = await prisma.message.findMany({
+    where: { senderId: senderId as string },
     include: { sender: true },
     orderBy: { createdAt: "desc" }
   });
+
   res.json(messages);
 });
+
 
 app.post("/messages", async (req: Request, res: Response) => {
   const { content, senderId } = req.body;
