@@ -1,118 +1,134 @@
-import { useEffect, useState } from "react";
-import type { User } from "../types";
-import LoadingSpinner from "./LoadingSpinner";
+import { Link } from "react-router-dom";
 
 interface Props {
-  selectedUser: User | null;
-  setSelectedUser: (user: User) => void;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function Sidebar({ selectedUser, setSelectedUser, isOpen, onClose }: Props) {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("http://localhost:3000/users")
-      .then(res => res.json())
-      .then(setUsers)
-      .catch(err => console.error("Failed to load users", err))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const handleUserSelect = (user: User) => {
-    setSelectedUser(user);
-    onClose(); // Close sidebar on mobile after selection
-  };
+export default function Sidebar({ isOpen, onClose }: Props) {
 
   return (
     <>
       {/* Desktop sidebar */}
-      <div className="hidden lg:block w-80 bg-white border-r border-gray-200">
-        <div className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Select User</h2>
-          <div className="space-y-2">
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <LoadingSpinner size="md" color="primary" />
+      <div className="hidden lg:block w-20 bg-gradient-to-b from-purple-500 to-purple-600 shadow-2xl relative z-50">
+
+        {/* Navigation icons */}
+        <div className="flex flex-col items-center pt-8 space-y-8">
+          {/* Home icon */}
+          <Link to="/" className="group relative">
+            <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center transition-all duration-300 group-hover:bg-white/20 group-hover:scale-110">
+              <svg
+                className="w-6 h-6 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                />
+              </svg>
+            </div>
+            <div className="absolute left-16 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white text-sm px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+              Home
+            </div>
+          </Link>
+
+          {/* Search icon */}
+          <Link to="/search" className="group relative">
+            <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center transition-all duration-300 group-hover:bg-white/20 group-hover:scale-110">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <div className="absolute left-16 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white text-sm px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+              Search
+            </div>
+          </Link>
+
+          {/* Chat icon */}
+          <Link to="/messages" className="group relative">
+            <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center transition-all duration-300 group-hover:bg-white/20 group-hover:scale-110">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+            <div className="absolute left-16 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white text-sm px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+              Chat
+            </div>
+          </Link>
+        </div>
+
+        {/* Profile picture at bottom */}
+        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2">
+          <Link to="/profile" className="group relative">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 p-1 shadow-lg">
+              <div className="w-full h-full rounded-full bg-gray-100 flex items-center justify-center">
+                <svg className="w-8 h-8 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                </svg>
               </div>
-            ) : (
-              users.map(user => (
-                <button
-                  key={user.id}
-                  onClick={() => handleUserSelect(user)}
-                  className={`w-full text-left p-3 rounded-lg transition-all duration-200 ${
-                    selectedUser?.id === user.id
-                      ? 'bg-primary-50 border border-primary-200 text-primary-700'
-                      : 'hover:bg-gray-50 border border-transparent'
-                  }`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                      <span className="text-primary-600 font-semibold text-sm">
-                        {user.username.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{user.username}</p>
-                      <p className="text-sm text-gray-500">Click to chat</p>
-                    </div>
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
+            </div>
+          </Link>
         </div>
       </div>
 
       {/* Mobile sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-80 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:hidden ${
-        isOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Select User</h2>
+      <div className={`fixed inset-y-0 left-0 z-50 w-20 bg-gradient-to-b from-purple-500 to-purple-600 border-r-2 border-blue-900 shadow-2xl transform transition-transform duration-300 ease-in-out lg:hidden ${isOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}>
+
+        {/* Close button for mobile */}
+        <div className="absolute top-4 right-2">
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="w-8 h-8 rounded-lg bg-white/20 backdrop-blur-sm border border-white/20 flex items-center justify-center transition-all duration-200 hover:bg-white/30"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
-        
-        <div className="p-4">
-          <div className="space-y-2">
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <LoadingSpinner size="md" color="primary" />
-              </div>
-            ) : (
-              users.map(user => (
-                <button
-                  key={user.id}
-                  onClick={() => handleUserSelect(user)}
-                  className={`w-full text-left p-3 rounded-lg transition-all duration-200 ${
-                    selectedUser?.id === user.id
-                      ? 'bg-primary-50 border border-primary-200 text-primary-700'
-                      : 'hover:bg-gray-50 border border-transparent'
-                  }`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                      <span className="text-primary-600 font-semibold text-sm">
-                        {user.username.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{user.username}</p>
-                      <p className="text-sm text-gray-500">Click to chat</p>
-                    </div>
-                  </div>
-                </button>
-              ))
-            )}
+
+        {/* Navigation icons */}
+        <div className="flex flex-col items-center pt-20 space-y-8">
+          {/* Home icon */}
+          <button className="group relative">
+            <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center transition-all duration-300 group-hover:bg-white/20 group-hover:scale-110">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+            </div>
+          </button>
+
+          {/* Search icon */}
+          <button className="group relative">
+            <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center transition-all duration-300 group-hover:bg-white/20 group-hover:scale-110">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </button>
+
+          {/* Chat icon */}
+          <button className="group relative">
+            <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center transition-all duration-300 group-hover:bg-white/20 group-hover:scale-110">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+          </button>
+        </div>
+
+        {/* Profile picture at bottom */}
+        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2">
+          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 p-1 shadow-lg">
+            <div className="w-full h-full rounded-full bg-gray-100 flex items-center justify-center">
+              <svg className="w-8 h-8 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+              </svg>
+            </div>
           </div>
         </div>
       </div>
