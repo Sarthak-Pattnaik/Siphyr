@@ -1,14 +1,12 @@
-import { useState } from 'react';
-import DirectMessagesSidebar from './DirectMessagesSidebar';
+// No React hooks needed here
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  onOpenDirectMessages?: () => void;
 }
 
-export default function MessageSidebar({ isOpen, onClose }: Props) {
-  const [directMessagesOpen, setDirectMessagesOpen] = useState(false);
-
+export default function MessageSidebar({ isOpen, onClose, onOpenDirectMessages }: Props) {
   return (
     <>
       {/* Desktop message sidebar */}
@@ -18,7 +16,7 @@ export default function MessageSidebar({ isOpen, onClose }: Props) {
           <div className="mb-8">
             <div className="flex items-center justify-center mb-6">
               <button 
-                onClick={() => setDirectMessagesOpen(prev => !prev)}
+                onClick={() => { onOpenDirectMessages?.(); }}
                 className="w-12 h-12 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl flex items-center justify-center hover:bg-white/20 transition-all duration-300 hover:scale-110"
               >
                 <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -81,7 +79,7 @@ export default function MessageSidebar({ isOpen, onClose }: Props) {
           <div className="mb-8">
             <div className="flex items-center justify-center mb-6">
               <button 
-                onClick={() => setDirectMessagesOpen(prev => !prev)}
+                onClick={() => { onOpenDirectMessages?.(); }}
                 className="w-12 h-12 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl flex items-center justify-center hover:bg-white/20 transition-all duration-300 hover:scale-110"
               >
                 <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,11 +121,7 @@ export default function MessageSidebar({ isOpen, onClose }: Props) {
         </div>
       </div>
 
-      {/* Direct Messages Sidebar */}
-      {directMessagesOpen && (<DirectMessagesSidebar 
-        isOpen={directMessagesOpen}
-        onClose={() => setDirectMessagesOpen(false)}
-      />)}
+      {/* Direct Messages Sidebar removed from here; rendered by page layout */}
     </>
   );
 }

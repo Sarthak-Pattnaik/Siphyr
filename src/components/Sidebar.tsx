@@ -1,4 +1,8 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import AuthModal from "./AuthModal";
+import { supabase } from "../lib/supabaseClient";
+import ProfileSetupModal from "./ProfileSetupModal";
 
 interface Props {
   isOpen: boolean;
@@ -6,6 +10,80 @@ interface Props {
 }
 
 export default function Sidebar({ isOpen, onClose }: Props) {
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isSetupOpen, setIsSetupOpen] = useState(false);
+  const [session, setSession] = useState<any>(null);
+  const [needsSetup, setNeedsSetup] = useState(false);
+  const [profilePicUrl, setProfilePicUrl] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('sidebar_profile_pic') || null;
+    } catch {
+      return null;
+    }
+  });
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const check = async () => {
+      if (!session?.user?.id) {
+        setNeedsSetup(false);
+        setProfilePicUrl(null);
+        return;
+      }
+      const { data, error } = await supabase
+        .from('User')
+        .select('username, profile_pic')
+        .eq('id', session.user.id)
+        .maybeSingle();
+      const missing = !!error || !data || !data.username;
+      setNeedsSetup(missing);
+      const pic = (data as any)?.profile_pic ?? null;
+      setProfilePicUrl(pic);
+      try {
+        if (pic) localStorage.setItem('sidebar_profile_pic', pic);
+        else localStorage.removeItem('sidebar_profile_pic');
+      } catch {}
+    };
+    check();
+  }, [session]);
+
+  const avatarThumbUrl = useMemo(() => {
+    if (!profilePicUrl) return null;
+    // Cloudinary: ensure /image/upload/ then add transformations for small, fast avatar
+    // e.g., https://res.cloudinary.com/<cloud>/image/upload/v123/abc.jpg
+    // ->     https://res.cloudinary.com/<cloud>/image/upload/c_fill,w_56,h_56,f_auto,q_auto:eco/<rest>
+    try {
+      const idx = profilePicUrl.indexOf('/image/upload/');
+      if (idx === -1) return profilePicUrl;
+      const before = profilePicUrl.substring(0, idx + '/image/upload'.length);
+      const after = profilePicUrl.substring(idx + '/image/upload'.length);
+      return `${before}/c_fill,w_56,h_56,f_auto,q_auto:eco${after}`;
+    } catch {
+      return profilePicUrl;
+    }
+  }, [profilePicUrl]);
+
+  const onProfileClick = () => {
+    if (!session) {
+      setIsAuthOpen(true);
+      return;
+    }
+    if (needsSetup) {
+      setIsSetupOpen(true);
+      return;
+    }
+    navigate('/profile');
+  };
 
   return (
     <>
@@ -63,15 +141,19 @@ export default function Sidebar({ isOpen, onClose }: Props) {
 
         {/* Profile picture at bottom */}
         <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2">
-          <Link to="/profile" className="group relative">
+          <button onClick={onProfileClick} className="group relative">
             <div className="w-14 h-14 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 p-1 shadow-lg">
-              <div className="w-full h-full rounded-full bg-gray-100 flex items-center justify-center">
-                <svg className="w-8 h-8 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                </svg>
+              <div className="w-full h-full rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                {avatarThumbUrl ? (
+                  <img src={avatarThumbUrl} alt="Avatar" className="w-full h-full object-cover rounded-full" loading="eager" decoding="async" fetchPriority="high" />
+                ) : (
+                  <svg className="w-8 h-8 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                  </svg>
+                )}
               </div>
             </div>
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -123,15 +205,34 @@ export default function Sidebar({ isOpen, onClose }: Props) {
 
         {/* Profile picture at bottom */}
         <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2">
-          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 p-1 shadow-lg">
-            <div className="w-full h-full rounded-full bg-gray-100 flex items-center justify-center">
-              <svg className="w-8 h-8 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-              </svg>
+          <button onClick={onProfileClick} className="group relative">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 p-1 shadow-lg">
+              <div className="w-full h-full rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                {avatarThumbUrl ? (
+                  <img src={avatarThumbUrl} alt="Avatar" className="w-full h-full object-cover rounded-full" loading="eager" decoding="async" fetchPriority="high" />
+                ) : (
+                  <svg className="w-8 h-8 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                  </svg>
+                )}
+              </div>
             </div>
-          </div>
+          </button>
         </div>
       </div>
+      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+      {session?.user?.id && (
+        <ProfileSetupModal
+          isOpen={isSetupOpen}
+          userId={session.user.id}
+          onComplete={() => {
+            setIsSetupOpen(false);
+            setNeedsSetup(false);
+            window.location.reload();
+          }}
+          onClose={() => setIsSetupOpen(false)}
+        />
+      )}
     </>
   );
 }
